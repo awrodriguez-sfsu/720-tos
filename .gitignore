@@ -58,6 +58,9 @@ hs_err_pid*
 # Project specific things
 #
 
+# host-tests executable
+stdlib-test
+
 # tos project things
 MANIFEST*
 VERSION

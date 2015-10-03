@@ -83,6 +83,7 @@ tools/ttc/config.rc
 etc/
 
 # tos images
+tos.img
 image/
 
 # CLion things

@@ -1,39 +1,29 @@
-
 #include <kernel.h>
 
 
+void move_cursor(WINDOW* wnd, int x, int y) {
 
-
-void move_cursor(WINDOW* wnd, int x, int y)
-{
 }
 
+void remove_cursor(WINDOW* wnd) {
 
-void remove_cursor(WINDOW* wnd)
-{
 }
 
+void show_cursor(WINDOW* wnd) {
 
-void show_cursor(WINDOW* wnd)
-{
 }
 
+void clear_window(WINDOW* wnd) {
 
-void clear_window(WINDOW* wnd)
-{
 }
 
+void output_char(WINDOW* wnd, unsigned char c) {
 
-void output_char(WINDOW* wnd, unsigned char c)
-{
 }
 
+void output_string(WINDOW* wnd, const char *str) {
 
-
-void output_string(WINDOW* wnd, const char *str)
-{
 }
-
 
 
 /*

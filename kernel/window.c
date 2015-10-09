@@ -1,28 +1,122 @@
 #include <kernel.h>
+#include "../include/kernel.h"
 
+BOOL valid_cursor_x(WINDOW* wnd, int x) {
+    return ((0 <= x) && (x < wnd->width));
+}
+
+BOOL valid_cursor_y(WINDOW* wnd, int y) {
+    return ((0 <= y) && (y < wnd->height));
+}
+
+BOOL valid_cursor_position(WINDOW* wnd, int x, int y) {
+    return (valid_cursor_x(wnd, x) && valid_cursor_y(wnd, y));
+}
 
 void move_cursor(WINDOW* wnd, int x, int y) {
+    if(valid_cursor_position(wnd, x, y)) {
+        wnd->cursor_x = x;
+        wnd->cursor_y = y;
+    }
+}
 
+MEM_ADDR get_cursor_address(WINDOW* wnd) {
+    return (MEM_ADDR) (0xB8000 + (2 * (wnd->x + wnd->cursor_x)) + (160 * (wnd->y + wnd->cursor_y)));
+}
+
+MEM_ADDR get_row_address(WINDOW* wnd, int row) {
+    return (MEM_ADDR) (0xB8000 + (2 * wnd->x) + (160 * (wnd->y + row)));
+}
+
+void cursor_display(WINDOW *wnd, unsigned char c) {
+    MEM_ADDR cursor_addr = get_cursor_address(wnd);
+    poke_b(cursor_addr, c);
+    poke_b(cursor_addr + 1, 0x0F);
 }
 
 void remove_cursor(WINDOW* wnd) {
-
+    cursor_display(wnd, ' ');
 }
 
 void show_cursor(WINDOW* wnd) {
-
+    cursor_display(wnd, wnd->cursor_char);
 }
 
 void clear_window(WINDOW* wnd) {
+    int row;
+    for(row = 0; row < wnd->height; row++){
+        MEM_ADDR current_row = get_row_address(wnd, row);
+        memset_b(current_row, 0x00, (wnd->width - 1) * 2 + 1);
+    }
+    move_cursor(wnd, wnd->x, wnd->y);
+}
 
+BOOL can_cursor_new_line(WINDOW* wnd) {
+    return (wnd->cursor_y + 1 < wnd->height);
+}
+
+BOOL can_cursor_advance(WINDOW* wnd) {
+    return (wnd->cursor_x + 1 < wnd->width);
+}
+
+void advance_cursor(WINDOW* wnd) {
+    move_cursor(wnd, wnd->cursor_x + 1, wnd->cursor_y);
+}
+
+void cursor_new_line(WINDOW* wnd) {
+    move_cursor(wnd, 0, wnd->cursor_y + 1);
+}
+
+void clear_last_row(WINDOW* wnd) {
+    MEM_ADDR last_row = get_row_address(wnd, wnd->height - 1);
+    memset_b(last_row, 0x00, (wnd->width - 1) * 2 + 1);
+}
+
+void scroll_window(WINDOW* wnd) {
+    MEM_ADDR base_addr = 0xB8000;
+
+    int width = (*wnd).width;
+    int height = (*wnd).height;
+
+    int row;
+    for(row = 0; row < (height - 1); row++){
+        MEM_ADDR old_line = get_row_address(wnd, row);
+        MEM_ADDR new_line = get_row_address(wnd, row + 1);
+        k_memcpy((void*) old_line, (void*) new_line, (wnd->width) * 2);
+    }
+
+    clear_last_row(wnd);
+    move_cursor(wnd, 0, wnd->cursor_y);
 }
 
 void output_char(WINDOW* wnd, unsigned char c) {
+    MEM_ADDR cursor_addr = get_cursor_address(wnd);
+    if(c == '\n'){
+        poke_b(cursor_addr, 0x00);
+        poke_b(cursor_addr + 1, 0x0F);
+    } else {
+        poke_b(cursor_addr, c);
+        poke_b(cursor_addr + 1, 0x0F);
+    }
 
+    if(can_cursor_advance(wnd) && (c != '\n' )) {
+        advance_cursor(wnd);
+    } else if(can_cursor_new_line(wnd)) {
+        cursor_new_line(wnd);
+    } else {
+        scroll_window(wnd);
+    }
 }
 
 void output_string(WINDOW* wnd, const char *str) {
+    int length = k_strlen(str);
+    while(length > 0) {
+        char c = *str;
+        output_char(wnd, c);
+        str++;
 
+        length--;
+    }
 }
 
 

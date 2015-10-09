@@ -2,7 +2,7 @@
 #include <kernel.h>
 
 int k_strlen(const char* str) {
-    char* string = str;
+    const char* string = str;
 
     for(string; *string; string++);
 

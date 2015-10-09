@@ -37,6 +37,10 @@ BYTE peek_b(MEM_ADDR addr);
 WORD peek_w(MEM_ADDR addr);
 LONG peek_l(MEM_ADDR addr);
 
+/*=====>>> additional mem.c <<<=============================================*/
+
+void* memset_b(MEM_ADDR addr, BYTE value, int length);
+
 
 /*=====>>> window.c <<<=====================================================*/
 

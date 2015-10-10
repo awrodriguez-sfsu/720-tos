@@ -46,9 +46,9 @@ void clear_window(WINDOW* wnd) {
     int row;
     for(row = 0; row < wnd->height; row++){
         MEM_ADDR current_row = get_row_address(wnd, row);
-        memset_b(current_row, 0x00, (wnd->width - 1) * 2 + 1);
+        memset_b(current_row, 0x00, (wnd->width * 2) - 1);
     }
-    move_cursor(wnd, wnd->x, wnd->y);
+    move_cursor(wnd, 0, 0);
 }
 
 BOOL can_cursor_new_line(WINDOW* wnd) {
@@ -69,17 +69,12 @@ void cursor_new_line(WINDOW* wnd) {
 
 void clear_last_row(WINDOW* wnd) {
     MEM_ADDR last_row = get_row_address(wnd, wnd->height - 1);
-    memset_b(last_row, 0x00, (wnd->width - 1) * 2 + 1);
+    memset_b(last_row, 0x00, (wnd->width * 2) - 1);
 }
 
 void scroll_window(WINDOW* wnd) {
-    MEM_ADDR base_addr = 0xB8000;
-
-    int width = (*wnd).width;
-    int height = (*wnd).height;
-
     int row;
-    for(row = 0; row < (height - 1); row++){
+    for(row = 0; row < (wnd->height - 1); row++){
         MEM_ADDR old_line = get_row_address(wnd, row);
         MEM_ADDR new_line = get_row_address(wnd, row + 1);
         k_memcpy((void*) old_line, (void*) new_line, (wnd->width) * 2);
@@ -91,7 +86,7 @@ void scroll_window(WINDOW* wnd) {
 
 void output_char(WINDOW* wnd, unsigned char c) {
     MEM_ADDR cursor_addr = get_cursor_address(wnd);
-    if(c == '\n'){
+    if(c == '\n') {
         poke_b(cursor_addr, 0x00);
         poke_b(cursor_addr + 1, 0x0F);
     } else {

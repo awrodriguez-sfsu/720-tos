@@ -1,18 +1,13 @@
-
 #include <kernel.h>
-
 #include "disptable.c"
-
+#include "../include/kernel.h"
 
 PROCESS active_proc;
-
 
 /*
  * Ready queues for all eight priorities.
  */
-PCB *ready_queue [MAX_READY_QUEUES];
-
-
+PCB* ready_queue [MAX_READY_QUEUES];
 
 
 /*
@@ -21,11 +16,9 @@ PCB *ready_queue [MAX_READY_QUEUES];
  * The process pointed to by p is put the ready queue.
  * The appropiate ready queue is determined by p->priority.
  */
+void add_ready_queue (PROCESS proc) {
 
-void add_ready_queue (PROCESS proc)
-{
 }
-
 
 
 /*
@@ -35,10 +28,9 @@ void add_ready_queue (PROCESS proc)
  * queue.
  */
 
-void remove_ready_queue (PROCESS proc)
-{
-}
+void remove_ready_queue (PROCESS proc) {
 
+}
 
 
 /*
@@ -49,10 +41,9 @@ void remove_ready_queue (PROCESS proc)
  * level round robin is used.
  */
 
-PROCESS dispatcher()
-{
-}
+PROCESS dispatcher() {
 
+}
 
 
 /*
@@ -63,10 +54,9 @@ PROCESS dispatcher()
  * The stack of the calling process is setup such that it
  * looks like an interrupt.
  */
-void resign()
-{
-}
+void resign() {
 
+}
 
 
 /*
@@ -75,6 +65,6 @@ void resign()
  * Initializes the necessary data structures.
  */
 
-void init_dispatcher()
-{
+void init_dispatcher() {
+
 }

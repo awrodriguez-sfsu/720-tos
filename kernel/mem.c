@@ -39,4 +39,6 @@ void* memset_b(MEM_ADDR addr, BYTE value, int length) {
 
         length--;
     }
+
+    return (void* ) addr;
 }

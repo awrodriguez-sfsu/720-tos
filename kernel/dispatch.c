@@ -34,11 +34,31 @@ void add_ready_queue(PROCESS proc) {
 }
 
 BOOL only_proc(PROCESS proc) {
-    return (proc->next == proc->prev);
+    return (proc->next == proc) && (proc->prev == proc);
 }
 
 BOOL head_of_list(PROCESS proc) {
     return (ready_queue[proc->priority] == proc);
+}
+
+void print_ready_queue() {
+    clear_window(kernel_window);
+    int i;
+    for(i = 0; i < MAX_READY_QUEUES; i++) {
+        PROCESS priority_list = ready_queue[i];
+
+        if(priority_list != NULL) {
+            kprintf("-----priority %d-----\n", i);
+            PROCESS current = priority_list;
+            kprintf("%s next:%s prev:%s\n", current->name, current->next->name, current->prev->name);
+            while(current->next != priority_list) {
+                current = current->next;
+                kprintf("%s next:%s prev:%s\n", current->name, current->next->name, current->prev->name);
+            }
+        } else {
+            kprintf("priority %d is empty\n", i);
+        }
+    }
 }
 
 /*
@@ -50,19 +70,22 @@ BOOL head_of_list(PROCESS proc) {
 
 void remove_ready_queue (PROCESS proc) {
 
-    PCB* prev = proc->prev;
-    PCB* next = proc->next;
+//    print_ready_queue();
+
+    PROCESS prev = proc->prev;
+    PROCESS next = proc->next;
 
     next->prev = prev;
     prev->next = next;
-    proc->next = NULL;
-    proc->prev = NULL;
 
     if(only_proc(proc)) {
         ready_queue[proc->priority] = NULL;
     } else if(head_of_list(proc)) {
         ready_queue[proc->priority] = next;
     }
+
+    proc->next = NULL;
+    proc->prev = NULL;
 }
 
 
@@ -104,4 +127,6 @@ void init_dispatcher() {
     for(i = 2; i < MAX_READY_QUEUES; i++) {
         ready_queue[i] = NULL;
     }
+
+    active_proc = ready_queue[1];
 }

@@ -34,12 +34,52 @@ PROCESS fork() {
     return (PROCESS) NULL;
 }
 
-void print_process(WINDOW* wnd, PROCESS p) {
+BOOL is_active_proc(PROCESS proc) {
+    if(active_proc == proc) {
+        return '*';
+    } else {
+        return ' ';
+    }
+}
 
+char* get_state_name(unsigned short state) {
+    switch(state) {
+        case 0:
+            return "READY";
+            break;
+        case 1:
+            return "SEND_BLOCKED";
+            break;
+        case 2:
+            return "REPLY_BLOCKED";
+            break;
+        case 3:
+            return "RECEIVE_BLOCKED";
+            break;
+        case 4:
+            return "MESSAGE_BLOCKED";
+            break;
+        case 5:
+            return "INTR_BLOCKED";
+            break;
+        default:
+            return "";
+    }
+}
+
+void print_process(WINDOW* wnd, PROCESS p) {
+    wprintf(wnd, "%-24s   %c       %-4d  %-8s\n", get_state_name(p->state), is_active_proc(p), p->priority, p->name);
 }
 
 void print_all_processes(WINDOW* wnd) {
-
+    wprintf(wnd, "State                    Active Priority Name\n");
+    wprintf(wnd, "---------------------------------------------\n");
+    int i;
+    for(i = 0; i < MAX_PROCS; i++) {
+        if(pcb[i].used) {
+            print_process(wnd, &pcb[i]);
+        }
+    }
 }
 
 void init_process() {

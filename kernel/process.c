@@ -90,7 +90,7 @@ void init_process() {
     pcb[0].first_port   = NULL;
     pcb->name           = "Boot process";
 
-    add_ready_queue(&pcb[0]);
+//    add_ready_queue(&pcb[0]);
 
     int i;
     for(i = 1; i < MAX_PROCS; i++) {

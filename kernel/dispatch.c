@@ -98,7 +98,29 @@ void remove_ready_queue (PROCESS proc) {
  */
 
 PROCESS dispatcher() {
+    int i;
 
+    /* Check of there are processes with higher priorities */
+    for (i = 0; i < active_proc->priority; ++i) {
+        if(ready_queue[i] != NULL) {
+            return ready_queue[i];
+        }
+    }
+
+    /* No processes with higher priorities existed */
+    /* Pass to next process in same priority level that is not self */
+    if(active_proc->next != active_proc) {
+        return active_proc->next;
+    }
+
+    /* No processes with higher priorities existed */
+    /* No other process with same priority level */
+    /* Check for processes with lower priority level */
+    for(i = active_proc->priority + 1; i < MAX_READY_QUEUES; ++i) {
+        if(ready_queue[i] != NULL) {
+            return ready_queue[i];
+        }
+    }
 }
 
 
@@ -122,11 +144,21 @@ void resign() {
  */
 
 void init_dispatcher() {
-    ready_queue[0] = NULL;
+    active_proc = NULL;
+
     int i;
-    for(i = 2; i < MAX_READY_QUEUES; i++) {
+    for(i = 0; i < MAX_READY_QUEUES; i++) {
         ready_queue[i] = NULL;
     }
 
-    active_proc = ready_queue[1];
+    add_ready_queue(&pcb[0]);
+
+    /* One time setting active_proc outside of dispatch */
+    /* Dispatch expects active_proc to never be NULL*/
+    /* Therefore we initialize active_proc with the boot process here */
+    for (i = 0; i < MAX_READY_QUEUES; ++i) {
+        if(ready_queue[i] != NULL) {
+            active_proc = ready_queue[i];
+        }
+    }
 }

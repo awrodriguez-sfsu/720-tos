@@ -4,16 +4,21 @@
 PCB pcb[MAX_PROCS];
 
 
-MEM_ADDR get_new_stack_frame(int number, void (*entry_point) (PROCESS, PARAM)) {
-    MEM_ADDR stack = (MEM_ADDR) 0xA0000 - (30720 * (number + 1));
-    poke_l(stack     , (LONG) 0);           // %EDI register
-    poke_l(stack +  4, (LONG) 0);           // %ESI register
-    poke_l(stack +  8, (LONG) 0);           // %EBP register
-    poke_l(stack + 12, (LONG) 0);           // %EBX register
-    poke_l(stack + 16, (LONG) 0);           // %EDX register
-    poke_l(stack + 20, (LONG) 0);           // %ECX register
-    poke_l(stack + 24, (LONG) 0);           // %EAX register
-    poke_l(stack + 28, (LONG) entry_point); // entry_point
+MEM_ADDR get_new_stack_frame(int number, void (*entry_point) (PROCESS, PARAM), PARAM param) {
+    MEM_ADDR stack = (MEM_ADDR) 0xA0000 - (30720 * number);
+    poke_l(stack     , param);              // param
+    poke_l(stack -  4, (LONG) 0);           // self
+    poke_l(stack -  8, (LONG) 0);           // return address (dummy value)
+    poke_l(stack - 12, (LONG) entry_point); // entry_point
+    poke_l(stack - 16, (LONG) 0);           // %EAX register
+    poke_l(stack - 20, (LONG) 0);           // %ECX register
+    poke_l(stack - 24, (LONG) 0);           // %EDX register
+    poke_l(stack - 28, (LONG) 0);           // %EBX register
+    poke_l(stack - 32, (LONG) 0);           // %EBP register
+    poke_l(stack - 36, (LONG) 0);           // %ESI register
+    poke_l(stack - 40, (LONG) 0);           // %EDI register
+
+    stack = stack - 40;
 
     return stack;
 }
@@ -26,7 +31,7 @@ PORT create_process (void (*ptr_to_new_proc) (PROCESS, PARAM), int prio, PARAM p
             pcb[i].used = TRUE;
             pcb[i].priority = (unsigned short) prio;
             pcb[i].state = STATE_READY;
-            pcb[i].esp = get_new_stack_frame(i, ptr_to_new_proc);
+            pcb[i].esp = get_new_stack_frame(i, ptr_to_new_proc, param);
             pcb[i].first_port = NULL;
             pcb[i].name = name;
 

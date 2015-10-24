@@ -1,4 +1,5 @@
 #include <kernel.h>
+#include "../include/kernel.h"
 
 PCB pcb[MAX_PROCS];
 
@@ -100,8 +101,6 @@ void init_process() {
     pcb[0].priority     = 1;
     pcb[0].first_port   = NULL;
     pcb->name           = "Boot process";
-
-//    add_ready_queue(&pcb[0]);
 
     int i;
     for(i = 1; i < MAX_PROCS; i++) {

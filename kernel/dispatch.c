@@ -1,6 +1,5 @@
 #include <kernel.h>
 #include "disptable.c"
-#include "../include/kernel.h"
 
 PROCESS active_proc;
 
@@ -41,6 +40,7 @@ BOOL head_of_list(PROCESS proc) {
     return (ready_queue[proc->priority] == proc);
 }
 
+/* Debuggin only */
 void print_ready_queue() {
     clear_window(kernel_window);
     int i;
@@ -70,7 +70,7 @@ void print_ready_queue() {
 
 void remove_ready_queue (PROCESS proc) {
 
-//    print_ready_queue();
+//    print_ready_queue(); // Debugging
 
     PROCESS prev = proc->prev;
     PROCESS next = proc->next;

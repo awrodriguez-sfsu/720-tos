@@ -1,5 +1,4 @@
 #include <kernel.h>
-#include "../include/kernel.h"
 
 PCB pcb[MAX_PROCS];
 

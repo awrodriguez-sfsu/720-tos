@@ -85,9 +85,6 @@ void remove_ready_queue (PROCESS proc) {
     } else if(head_of_list(proc)) {
         ready_queue[proc->priority] = next;
     }
-
-    proc->next = NULL;
-    proc->prev = NULL;
 }
 
 /*
@@ -110,7 +107,7 @@ PROCESS dispatcher() {
 
     /* No processes with higher priorities existed */
     /* Pass to next process in same priority level that is not self */
-    if(active_proc->next != NULL) {
+    if(ready_queue[active_proc->priority] != NULL) {
         return active_proc->next;
     }
 

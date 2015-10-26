@@ -110,7 +110,7 @@ PROCESS dispatcher() {
 
     /* No processes with higher priorities existed */
     /* Pass to next process in same priority level that is not self */
-    if(active_proc->next != NULL && active_proc->next != active_proc) {
+    if(active_proc->next != NULL) {
         return active_proc->next;
     }
 

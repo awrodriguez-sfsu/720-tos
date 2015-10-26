@@ -9,6 +9,7 @@ PROCESS active_proc;
  */
 PCB* ready_queue [MAX_READY_QUEUES];
 
+//int index = 0;
 
 /*
  * add_ready_queue
@@ -42,25 +43,25 @@ BOOL head_of_list(PROCESS proc) {
 }
 
 /* Debuggin only */
-void print_ready_queue() {
-    clear_window(kernel_window);
-    int i;
-    for(i = 0; i < MAX_READY_QUEUES; i++) {
-        PROCESS priority_list = ready_queue[i];
-
-        if(priority_list != NULL) {
-            kprintf("-----priority %d-----\n", i);
-            PROCESS current = priority_list;
-            kprintf("%s next:%s prev:%s\n", current->name, current->next->name, current->prev->name);
-            while(current->next != priority_list) {
-                current = current->next;
-                kprintf("%s next:%s prev:%s\n", current->name, current->next->name, current->prev->name);
-            }
-        } else {
-            kprintf("priority %d is empty\n", i);
-        }
-    }
-}
+//void print_ready_queue() {
+//    clear_window(kernel_window);
+//    int i;
+//    for(i = 0; i < MAX_READY_QUEUES; i++) {
+//        PROCESS priority_list = ready_queue[i];
+//
+//        if(priority_list != NULL) {
+//            kprintf("-----priority %d-----\n", i);
+//            PROCESS current = priority_list;
+//            kprintf("%s next:%s prev:%s\n", current->name, current->next->name, current->prev->name);
+//            while(current->next != priority_list) {
+//                current = current->next;
+//                kprintf("%s next:%s prev:%s\n", current->name, current->next->name, current->prev->name);
+//            }
+//        } else {
+//            kprintf("priority %d is empty\n", i);
+//        }
+//    }
+//}
 
 /*
  * remove_ready_queue
@@ -89,7 +90,6 @@ void remove_ready_queue (PROCESS proc) {
     proc->prev = NULL;
 }
 
-
 /*
  * dispatcher
  *----------------------------------------------------------------------------
@@ -102,7 +102,7 @@ PROCESS dispatcher() {
     int i;
 
     /* Check of there are processes with higher priorities */
-    for (i = 0; i < active_proc->priority; ++i) {
+    for (i = MAX_READY_QUEUES - 1; i > active_proc->priority; --i) {
         if(ready_queue[i] != NULL) {
             return ready_queue[i];
         }
@@ -110,20 +110,19 @@ PROCESS dispatcher() {
 
     /* No processes with higher priorities existed */
     /* Pass to next process in same priority level that is not self */
-    if(active_proc->next != active_proc) {
+    if(active_proc->next != NULL && active_proc->next != active_proc) {
         return active_proc->next;
     }
 
     /* No processes with higher priorities existed */
     /* No other process with same priority level */
     /* Check for processes with lower priority level */
-    for(i = active_proc->priority + 1; i < MAX_READY_QUEUES; ++i) {
+    for(i = active_proc->priority - 1; i >= 0; --i) {
         if(ready_queue[i] != NULL) {
             return ready_queue[i];
         }
     }
 }
-
 
 /*
  * resign

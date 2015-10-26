@@ -12,12 +12,12 @@ MEM_ADDR get_new_stack_frame(int number, void (*entry_point) (PROCESS, PARAM), P
     poke_l(stack -  8, (LONG) 0);            // return address (dummy value)
     poke_l(stack - 12, (LONG) entry_point);  // entry_point
     poke_l(stack - 16, (LONG) 0);            // %EAX register
-    poke_l(stack - 20, (LONG) 2);            // %ECX register
-    poke_l(stack - 24, (LONG) 3);            // %EDX register
-    poke_l(stack - 28, (LONG) 4);            // %EBX register
-    poke_l(stack - 32, (LONG) 5);            // %EBP register
-    poke_l(stack - 36, (LONG) 6);            // %ESI register
-    poke_l(stack - 40, (LONG) 7);            // %EDI register
+    poke_l(stack - 20, (LONG) 0);            // %ECX register
+    poke_l(stack - 24, (LONG) 0);            // %EDX register
+    poke_l(stack - 28, (LONG) 0);            // %EBX register
+    poke_l(stack - 32, (LONG) 0);            // %EBP register
+    poke_l(stack - 36, (LONG) 0);            // %ESI register
+    poke_l(stack - 40, (LONG) 0);            // %EDI register
 
     stack = stack - 40;
 
@@ -99,9 +99,10 @@ void init_process() {
     pcb[0].magic        = MAGIC_PCB;
     pcb[0].used         = TRUE;
     pcb[0].state        = STATE_READY;
+    pcb[0].esp          = 655360;
     pcb[0].priority     = 1;
     pcb[0].first_port   = NULL;
-    pcb->name           = "Boot process";
+    pcb[0].name         = "Boot process";
 
     int i;
     for(i = 1; i < MAX_PROCS; i++) {

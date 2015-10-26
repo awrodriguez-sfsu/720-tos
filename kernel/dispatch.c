@@ -1,5 +1,6 @@
 #include <kernel.h>
 #include "disptable.c"
+#include "../include/kernel.h"
 
 PROCESS active_proc;
 
@@ -134,6 +135,27 @@ PROCESS dispatcher() {
  */
 void resign() {
 
+    asm("pushl %eax");
+    asm("pushl %ecx");
+    asm("pushl %edx");
+    asm("pushl %ebx");
+    asm("pushl %ebp");
+    asm("pushl %esi");
+    asm("pushl %edi");
+
+    asm("movl %%esp, %0" : "=r" (active_proc->esp) :);
+
+    active_proc = dispatcher();
+
+    asm("movl %0, %%esp" : : "r" (active_proc->esp));
+
+    asm("popl %edi");
+    asm("popl %esi");
+    asm("popl %ebp");
+    asm("popl %ebx");
+    asm("popl %edx");
+    asm("popl %ecx");
+    asm("popl %eax");
 }
 
 

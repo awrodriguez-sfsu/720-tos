@@ -99,7 +99,6 @@ void init_process() {
     pcb[0].magic        = MAGIC_PCB;
     pcb[0].used         = TRUE;
     pcb[0].state        = STATE_READY;
-    pcb[0].esp          = 655360;
     pcb[0].priority     = 1;
     pcb[0].first_port   = NULL;
     pcb[0].name         = "Boot process";

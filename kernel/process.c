@@ -33,11 +33,11 @@ PORT create_process (void (*ptr_to_new_proc) (PROCESS, PARAM), int prio, PARAM p
             pcb[i].priority = (unsigned short) prio;
             pcb[i].state = STATE_READY;
             pcb[i].esp = get_new_stack_frame(i, ptr_to_new_proc, param);
-            pcb[i].first_port = NULL;
+            pcb[i].first_port = create_new_port(&pcb[i]);
             pcb[i].name = name;
 
             add_ready_queue(&pcb[i]);
-            return NULL;
+            return pcb[i].first_port;
         }
     }
 }

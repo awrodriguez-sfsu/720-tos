@@ -139,6 +139,7 @@ void* receive (PROCESS* sender) {
         remove_from_port_queue(current_port, message_sender);
     } else if(message_sender->state == STATE_SEND_BLOCKED) {
         change_state(message_sender, STATE_REPLY_BLOCKED);
+        remove_from_port_queue(current_port, message_sender);
     } else {
         remove_from_port_queue(current_port, message_sender);
     }

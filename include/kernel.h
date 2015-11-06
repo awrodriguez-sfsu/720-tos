@@ -144,6 +144,9 @@ void remove_ready_queue (PROCESS proc);
 void resign();
 void init_dispatcher();
 
+/*=====>>> additional dispatch.c <<<========================================*/
+void change_state(PROCESS proc, unsigned short state);
+
 
 /*=====>>> null.c <<<=======================================================*/
 

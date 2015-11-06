@@ -42,7 +42,7 @@ BOOL head_of_list(PROCESS proc) {
     return (ready_queue[proc->priority] == proc);
 }
 
-/* Debuggin only */
+/* Debugging only */
 //void print_ready_queue() {
 //    clear_window(kernel_window);
 //    int i;
@@ -62,6 +62,18 @@ BOOL head_of_list(PROCESS proc) {
 //        }
 //    }
 //}
+
+void change_state(PROCESS proc, unsigned short state) {
+    if(proc->state == STATE_READY && state != STATE_READY) {
+        proc->state = state;
+        remove_ready_queue(proc);
+    } else if (proc->state != STATE_READY && state == STATE_READY) {
+        proc->state = state;
+        add_ready_queue(proc);
+    } else {
+        proc->state = state;
+    }
+}
 
 /*
  * remove_ready_queue
@@ -106,7 +118,7 @@ PROCESS dispatcher() {
     }
 
     /* No processes with higher priorities existed */
-    /* Pass to next process in same priority level that is not self */
+    /* Pass to next process in same priority level even if it is self */
     if(ready_queue[active_proc->priority] != NULL) {
         return active_proc->next;
     }

@@ -73,12 +73,12 @@ void send (PORT dest_port, void* data) {
 
     if(receiver->state == STATE_RECEIVE_BLOCKED && dest_port->open) {
         change_state(receiver, STATE_READY);
-        add_to_port_queue(dest_port, active_proc);
         change_state(active_proc, STATE_REPLY_BLOCKED);
     } else {
-        add_to_port_queue(dest_port, active_proc);
         change_state(active_proc, STATE_SEND_BLOCKED);
     }
+
+    add_to_port_queue(dest_port, active_proc);
 
     resign();
 }
@@ -90,11 +90,11 @@ void message (PORT dest_port, void* data) {
 
     if(receiver->state == STATE_RECEIVE_BLOCKED && dest_port->open) {
         change_state(receiver, STATE_READY);
-        add_to_port_queue(dest_port, active_proc);
     } else {
-        add_to_port_queue(dest_port, active_proc);
         change_state(active_proc, STATE_MESSAGE_BLOCKED);
     }
+    add_to_port_queue(dest_port, active_proc);
+
     resign();
 }
 
@@ -123,6 +123,8 @@ PORT get_next_message_port() {
 
         current_port = current_port->next;
     }
+
+    return FALSE;
 }
 
 void* receive (PROCESS* sender) {
@@ -136,13 +138,11 @@ void* receive (PROCESS* sender) {
 
     if(message_sender->state == STATE_MESSAGE_BLOCKED) {
         change_state(message_sender, STATE_READY);
-        remove_from_port_queue(current_port, message_sender);
     } else if(message_sender->state == STATE_SEND_BLOCKED) {
         change_state(message_sender, STATE_REPLY_BLOCKED);
-        remove_from_port_queue(current_port, message_sender);
-    } else {
-        remove_from_port_queue(current_port, message_sender);
     }
+
+    remove_from_port_queue(current_port, message_sender);
 
     *sender = message_sender;
     return message_sender->param_data;

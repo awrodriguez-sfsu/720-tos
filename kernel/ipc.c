@@ -3,8 +3,21 @@
 
 PORT_DEF port[MAX_PORTS];
 
+void add_port_to_sctive_proc(PORT new_port) {
+    PORT first_port = active_proc->first_port;
+
+    while(first_port->next != NULL) {
+        first_port = first_port->next;
+    }
+
+    first_port->next = new_port;
+}
+
 PORT create_port() {
-    return create_new_port(active_proc);
+    PORT new_port = create_new_port(active_proc);
+    add_port_to_sctive_proc(new_port);
+
+    return new_port;
 }
 
 PORT create_new_port (PROCESS owner) {

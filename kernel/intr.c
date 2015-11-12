@@ -1,5 +1,6 @@
-
 #include <kernel.h>
+#include "../include/kernel.h"
+#include "../include/assert.h"
 
 BOOL interrupts_initialized = FALSE;
 
@@ -7,9 +8,7 @@ IDT idt [MAX_INTERRUPTS];
 PROCESS interrupt_table [MAX_INTERRUPTS];
 PROCESS p;
 
-
-void load_idt (IDT* base)
-{
+void load_idt (IDT* base) {
     unsigned short           limit;
     volatile unsigned char   mem48 [6];
     volatile unsigned       *base_ptr;
@@ -23,32 +22,25 @@ void load_idt (IDT* base)
     asm ("lidt %0" : "=m" (mem48));
 }
 
+void init_idt_entry (int intr_no, void (*isr) (void)) {
 
-void init_idt_entry (int intr_no, void (*isr) (void))
-{
 }
-
-
-
 
 /*
  * Timer ISR
  */
 void isr_timer ();
-void dummy_isr_timer ()
-{
+void dummy_isr_timer () {
+
 }
-
-
 
 /*
  * COM1 ISR
  */
 void isr_com1 ();
-void dummy_isr_com1 ()
-{
-}
+void dummy_isr_com1 () {
 
+}
 
 /*
  * Keyboard ISR
@@ -108,18 +100,15 @@ void dummy_isr_keyb()
     asm ("iret");
 }
 
-void wait_for_interrupt (int intr_no)
-{
+void wait_for_interrupt (int intr_no) {
+
 }
 
-
-void delay ()
-{
+void delay () {
     asm ("nop;nop;nop");
 }
 
-void re_program_interrupt_controller ()
-{
+void re_program_interrupt_controller () {
     /* Shift IRQ Vectors so they don't collide with the
        x86 generated IRQs */
 
@@ -145,6 +134,6 @@ void re_program_interrupt_controller ()
     asm ("movb $0x00,%al;outb %al,$0xA1;call delay");
 }
 
-void init_interrupts()
-{
+void init_interrupts() {
+
 }

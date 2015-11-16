@@ -16,53 +16,49 @@
 MEM_ADDR screen_offset_for_timer_isr = 0xb8000 + 3 * 160 + 2 * 11;
 int counter = 10;
 
-void timer_isr ()
+void timer_isr ();
+void timer_isr_wrapper()
 {
     /*
-     *		push	%eax		; Push context
-     *          push    %ecx
-     *          push    %edx
-     *          push    %ebx
-     *          push    %ebp
-     *          push    %esi
-     *          push    %edi
+     *	PUSHL	%EAX		; Save process' context
+     *  PUSHL   %ECX
+     *  PUSHL   %EDX
+     *  PUSHL   %EBX
+     *  PUSHL   %EBP
+     *  PUSHL   %ESI
+     *  PUSHL   %EDI
      */
-    asm ("push %eax");
-    asm ("push %ecx");
-    asm ("push %edx");
-    asm ("push %ebx");
-    asm ("push %ebp");
-    asm ("push %esi");
-    asm ("push %edi");
+    asm ("timer_isr:");
+    asm ("pushl %eax;pushl %ecx;pushl %edx");
+    asm ("pushl %ebx;pushl %ebp;pushl %esi;pushl %edi");
+    /* Call the actual implementation of the ISR */
+    asm ("call timer_isr_impl");
+    /*
+     *	MOVB  $0x20,%AL	; Reset interrupt controller
+     *	OUTB  %AL,$0x20
+     *	POPL  %EDI      ; Restore previously saved context
+     *  POPL  %ESI
+     *  POPL  %EBP
+     *  POPL  %EBX
+     *  POPL  %EDX
+     *  POPL  %ECX
+     *  POPL  %EAX
+     *	IRET		; Return to new process
+     */
+    asm ("movb $0x20,%al;outb %al,$0x20");
+    asm ("popl %edi;popl %esi;popl %ebp;popl %ebx");
+    asm ("popl %edx;popl %ecx;popl %eax");
+    asm ("iret");
+}
+
+void timer_isr_impl ()
+{
     if (!counter--) {
-	counter = 20;
-	poke_b(screen_offset_for_timer_isr,
-	       peek_b(screen_offset_for_timer_isr) + 1);
+        counter = 20;
+        poke_b(screen_offset_for_timer_isr,
+               peek_b(screen_offset_for_timer_isr) + 1);
         check_sum ++;
     }
-    
-    /*
-     *		movb	$0x20,%al	; Reset interrupt controller
-     *		outb	%al,$0x20
-     *		pop	%edi	        ; Restore previously saved context
-     *          pop     %esi
-     *          pop     %ebp
-     *          pop     %ebx
-     *          pop     %edx
-     *          pop     %ecx
-     *          pop     %eax
-     *		iret			; Return to interrupted program
-     */
-    asm ("movb  $0x20,%al");
-    asm ("outb  %al,$0x20");
-    asm ("pop	%edi");
-    asm ("pop   %esi");
-    asm ("pop   %ebp");
-    asm ("pop   %ebx");
-    asm ("pop   %edx");
-    asm ("pop   %ecx");
-    asm ("pop   %eax");
-    asm ("iret");
 }
 
 
@@ -70,7 +66,7 @@ void test_isr_1()
 {
     MEM_ADDR screen_offset_for_boot_proc = 0xb8000 + 4 * 160 + 2 * 11;
     volatile int flag;
-    
+
     test_reset();
     check_sum = 0;
     init_interrupts();
@@ -84,10 +80,10 @@ void test_isr_1()
 
     int i;
     for (i = 1; i < 700000; i++)
-	poke_b(screen_offset_for_boot_proc,
-	       peek_b(screen_offset_for_boot_proc) + 1);
+        poke_b(screen_offset_for_boot_proc,
+               peek_b(screen_offset_for_boot_proc) + 1);
 
     if (check_sum == 0)
-	test_failed(70);
+        test_failed(70);
 }
 

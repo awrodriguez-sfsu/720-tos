@@ -23,7 +23,96 @@ void load_idt (IDT* base) {
 }
 
 void init_idt_entry (int intr_no, void (*isr) (void)) {
+    idt[intr_no].offset_0_15  = (unsigned short) ((unsigned short) isr & 0xFFFF);
+    idt[intr_no].offset_16_31 = (unsigned short) (((unsigned short) isr >> 16) & 0xFFFF);
+    idt[intr_no].selector     = CODE_SELECTOR;
+    idt[intr_no].dword_count  = 0x00;
+    idt[intr_no].unused       = 0x00;
+    idt[intr_no].type         = 0x0E;
+    idt[intr_no].dt           = 0x00;
+    idt[intr_no].dpl          = 0x00;
+    idt[intr_no].p            = 0x01;
+}
 
+void dummy_isr() {
+    asm("movb $0x20,%al");
+    asm("outb %al,$0x20");
+    asm("iret");
+}
+
+void fatal_exception(int interrupt_number) {
+    WINDOW error_window = {0, 24, 80, 1, 0, 0, ' '};
+
+    wprintf(&error_window, "Fatal Exception %d (%s)", interrupt_number, active_proc->name);
+    while(1);
+}
+
+void exception0() {
+    fatal_exception(0);
+}
+
+void exception1() {
+    fatal_exception(1);
+}
+
+void exception2() {
+    fatal_exception(2);
+}
+
+void exception3() {
+    fatal_exception(3);
+}
+
+void exception4() {
+    fatal_exception(4);
+}
+
+void exception5() {
+    fatal_exception(5);
+}
+
+void exception6() {
+    fatal_exception(6);
+}
+
+void exception7() {
+    fatal_exception(7);
+}
+
+void exception8() {
+    fatal_exception(8);
+}
+
+void exception9() {
+    fatal_exception(9);
+}
+
+void exception10() {
+    fatal_exception(10);
+}
+
+void exception11() {
+    fatal_exception(11);
+}
+
+void exception12() {
+    fatal_exception(12);
+}
+
+void exception13() {
+    fatal_exception(13);
+}
+
+void exception14() {
+    fatal_exception(14);
+}
+
+void exception15() {
+    fatal_exception(15);
+}
+
+void exception16() {
+    fatal_exception(16);
 }
 
 /*
@@ -67,11 +156,11 @@ void dummy_isr_keyb()
     p = interrupt_table[KEYB_IRQ];
 
     if (p == NULL) {
-	panic ("service_intr_0x61: Spurious interrupt");
+        panic ("service_intr_0x61: Spurious interrupt");
     }
 
     if (p->state != STATE_INTR_BLOCKED) {
-	panic ("service_intr_0x61: No process waiting");
+        panic ("service_intr_0x61: No process waiting");
     }
 
     /* Add event handler to ready queue */
@@ -135,5 +224,35 @@ void re_program_interrupt_controller () {
 }
 
 void init_interrupts() {
+    int i;
 
+    load_idt(idt);
+
+    for(i = 17; i < MAX_INTERRUPTS; i++) {
+        init_idt_entry(i, dummy_isr);
+    }
+
+    init_idt_entry(0,  exception0);
+    init_idt_entry(1,  exception1);
+    init_idt_entry(2,  exception2);
+    init_idt_entry(3,  exception3);
+    init_idt_entry(4,  exception4);
+    init_idt_entry(5,  exception5);
+    init_idt_entry(6,  exception6);
+    init_idt_entry(7,  exception7);
+    init_idt_entry(8,  exception8);
+    init_idt_entry(9,  exception9);
+    init_idt_entry(10, exception10);
+    init_idt_entry(11, exception11);
+    init_idt_entry(12, exception12);
+    init_idt_entry(13, exception13);
+    init_idt_entry(14, exception14);
+    init_idt_entry(15, exception15);
+    init_idt_entry(16, exception16);
+
+    re_program_interrupt_controller();
+
+    interrupts_initialized = TRUE;
+
+    asm("sti");
 }

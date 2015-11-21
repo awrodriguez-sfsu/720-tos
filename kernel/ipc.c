@@ -21,6 +21,9 @@ PORT create_port() {
 }
 
 PORT create_new_port (PROCESS owner) {
+    volatile int lock;
+    DISABLE_INTR(lock);
+
     int i;
     for(i = 0; i < MAX_PORTS; i++) {
         if(port[i].used == FALSE) {
@@ -35,6 +38,8 @@ PORT create_new_port (PROCESS owner) {
             return &port[i];
         }
     }
+
+    ENABLE_INTR(lock);
 }
 
 void open_port (PORT port) {
@@ -80,6 +85,9 @@ void add_to_port_queue(PORT port, PROCESS proc) {
 }
 
 void send (PORT dest_port, void* data) {
+    volatile int lock;
+    DISABLE_INTR(lock);
+
     PROCESS receiver = dest_port->owner;
     active_proc->param_proc = receiver;
     active_proc->param_data = data;
@@ -93,10 +101,13 @@ void send (PORT dest_port, void* data) {
 
     add_to_port_queue(dest_port, active_proc);
 
+    ENABLE_INTR(lock);
     resign();
 }
 
 void message (PORT dest_port, void* data) {
+    volatile int lock;
+    DISABLE_INTR(lock);
     PROCESS receiver = dest_port->owner;
     active_proc->param_proc = receiver;
     active_proc->param_data = data;
@@ -108,6 +119,7 @@ void message (PORT dest_port, void* data) {
     }
     add_to_port_queue(dest_port, active_proc);
 
+    ENABLE_INTR(lock);
     resign();
 }
 
@@ -141,6 +153,8 @@ PORT get_next_message_port() {
 }
 
 void* receive (PROCESS* sender) {
+    volatile int lock;
+    DISABLE_INTR(lock);
     if(!message_pending()) {
         change_state(active_proc, STATE_RECEIVE_BLOCKED);
         resign();
@@ -158,11 +172,15 @@ void* receive (PROCESS* sender) {
     remove_from_port_queue(current_port, message_sender);
 
     *sender = message_sender;
+    ENABLE_INTR(lock);
     return message_sender->param_data;
 }
 
 void reply (PROCESS sender) {
+    volatile int lock;
+    DISABLE_INTR(lock);
     change_state(sender, STATE_READY);
+    ENABLE_INTR(lock);
     resign();
 }
 

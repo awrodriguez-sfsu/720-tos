@@ -115,12 +115,36 @@ void exception16() {
     fatal_exception(16);
 }
 
-/*
- * Timer ISR
- */
-void isr_timer ();
-void dummy_isr_timer () {
+void isr_timer_handler() {
+    active_proc = dispatcher();
+}
 
+void isr_timer_wrapper() {
+    asm("pushl %eax");
+    asm("pushl %ecx");
+    asm("pushl %edx");
+    asm("pushl %ebx");
+    asm("pushl %ebp");
+    asm("pushl %esi");
+    asm("pushl %edi");
+
+    asm("movl %%esp, %0" : "=m" (active_proc->esp) : );
+    isr_timer_handler();
+    asm("movl %0, %%esp" : : "m" (active_proc->esp));
+
+    /* Reset interrupt controller */
+    asm("movb $0x20,%al");
+    asm("outb %al,$0x20");
+
+    asm("popl %edi");
+    asm("popl %esi");
+    asm("popl %ebp");
+    asm("popl %ebx");
+    asm("popl %edx");
+    asm("popl %ecx");
+    asm("popl %eax");
+
+    asm("iret");
 }
 
 /*
@@ -249,6 +273,8 @@ void init_interrupts() {
     init_idt_entry(14, exception14);
     init_idt_entry(15, exception15);
     init_idt_entry(16, exception16);
+
+    init_idt_entry(TIMER_IRQ, isr_timer_wrapper);
 
     re_program_interrupt_controller();
 

@@ -104,6 +104,8 @@ void output_char(WINDOW* wnd, unsigned char c) {
 }
 
 void output_string(WINDOW* wnd, const char *str) {
+	volatile int lock;
+    DISABLE_INTR(lock);
     int length = k_strlen(str);
     while(length > 0) {
         char c = *str;
@@ -112,6 +114,7 @@ void output_string(WINDOW* wnd, const char *str) {
 
         length--;
     }
+    ENABLE_INTR(lock);
 }
 
 

@@ -18,6 +18,8 @@ PCB* ready_queue [MAX_READY_QUEUES];
  * The appropriate ready queue is determined by proc->priority.
  */
 void add_ready_queue(PROCESS proc) {
+    volatile int lock;
+    DISABLE_INTR(lock);
     /* empty queue */
     if(ready_queue[proc->priority] == NULL) {
         proc->next = proc;
@@ -32,6 +34,7 @@ void add_ready_queue(PROCESS proc) {
         proc->prev = last;
         proc->next = first;
     }
+    ENABLE_INTR(lock);
 }
 
 BOOL only_proc(PROCESS proc) {
@@ -64,6 +67,9 @@ BOOL head_of_list(PROCESS proc) {
 //}
 
 void change_state(PROCESS proc, unsigned short state) {
+    volatile int lock;
+    DISABLE_INTR(lock);
+
     if(proc->state == STATE_READY && state != STATE_READY) {
         proc->state = state;
         remove_ready_queue(proc);
@@ -73,6 +79,8 @@ void change_state(PROCESS proc, unsigned short state) {
     } else {
         proc->state = state;
     }
+
+    ENABLE_INTR(lock);
 }
 
 /*
@@ -83,6 +91,8 @@ void change_state(PROCESS proc, unsigned short state) {
  */
 
 void remove_ready_queue (PROCESS proc) {
+    volatile int lock;
+    DISABLE_INTR(lock);
 
 //    print_ready_queue(); // Debugging
 
@@ -97,6 +107,8 @@ void remove_ready_queue (PROCESS proc) {
     } else if(head_of_list(proc)) {
         ready_queue[proc->priority] = next;
     }
+
+    ENABLE_INTR(lock);
 }
 
 /*
@@ -108,11 +120,14 @@ void remove_ready_queue (PROCESS proc) {
  */
 
 PROCESS dispatcher() {
+    volatile int lock;
+    DISABLE_INTR(lock);
     int i;
 
     /* Check of there are processes with higher priorities */
     for (i = MAX_READY_QUEUES - 1; i > active_proc->priority; --i) {
         if(ready_queue[i] != NULL) {
+            ENABLE_INTR(lock);
             return ready_queue[i];
         }
     }
@@ -120,6 +135,7 @@ PROCESS dispatcher() {
     /* No processes with higher priorities existed */
     /* Pass to next process in same priority level even if it is self */
     if(ready_queue[active_proc->priority] != NULL) {
+        ENABLE_INTR(lock);
         return active_proc->next;
     }
 
@@ -128,6 +144,7 @@ PROCESS dispatcher() {
     /* Check for processes with lower priority level */
     for(i = active_proc->priority - 1; i >= 0; --i) {
         if(ready_queue[i] != NULL) {
+            ENABLE_INTR(lock);
             return ready_queue[i];
         }
     }
@@ -142,6 +159,16 @@ PROCESS dispatcher() {
  * looks like an interrupt.
  */
 void resign() {
+
+    /* pushing eflags and cs register */
+    /* this allows the stack to look the same */
+    /* between normal resign and interrupts */
+    asm("pushfl");
+    asm("cli");
+    asm("pop %eax");
+    asm("xchg (%esp), %eax");
+    asm("push %cs");
+    asm("pushl %eax");
 
     asm("pushl %eax");
     asm("pushl %ecx");
@@ -164,6 +191,8 @@ void resign() {
     asm("popl %edx");
     asm("popl %ecx");
     asm("popl %eax");
+
+    asm("iret");
 }
 
 

@@ -10,21 +10,29 @@ MEM_ADDR get_new_stack_frame(int number, void (*entry_point) (PROCESS, PARAM), P
     poke_l(stack     , param);               // param
     poke_l(stack -  4, (LONG) &pcb[number]); // self
     poke_l(stack -  8, (LONG) 0);            // return address (dummy value)
-    poke_l(stack - 12, (LONG) entry_point);  // entry_point
-    poke_l(stack - 16, (LONG) 0);            // %EAX register
-    poke_l(stack - 20, (LONG) 0);            // %ECX register
-    poke_l(stack - 24, (LONG) 0);            // %EDX register
-    poke_l(stack - 28, (LONG) 0);            // %EBX register
-    poke_l(stack - 32, (LONG) 0);            // %EBP register
-    poke_l(stack - 36, (LONG) 0);            // %ESI register
-    poke_l(stack - 40, (LONG) 0);            // %EDI register
+    if(interrupts_initialized) {
+        poke_l(stack - 12, (LONG) 512);      // EFLAGS value
+    } else {
+        poke_l(stack - 12, (LONG) 0);        // EFLAGS value
+    }
+    poke_l(stack - 16, (LONG) 8);            // CS register
+    poke_l(stack - 20, (LONG) entry_point);  // entry_point
+    poke_l(stack - 24, (LONG) 0);            // %EAX register
+    poke_l(stack - 28, (LONG) 0);            // %ECX register
+    poke_l(stack - 32, (LONG) 0);            // %EDX register
+    poke_l(stack - 36, (LONG) 0);            // %EBX register
+    poke_l(stack - 40, (LONG) 0);            // %EBP register
+    poke_l(stack - 44, (LONG) 0);            // %ESI register
+    poke_l(stack - 48, (LONG) 0);            // %EDI register
 
-    stack = stack - 40;
+    stack = stack - 48;
 
     return stack;
 }
 
 PORT create_process (void (*ptr_to_new_proc) (PROCESS, PARAM), int prio, PARAM param, char *name) {
+    volatile int lock;
+    DISABLE_INTR(lock);
     int i;
     for(i = 1; i < MAX_PROCS; i++) {
         if(pcb[i].used == FALSE) {
@@ -40,6 +48,7 @@ PORT create_process (void (*ptr_to_new_proc) (PROCESS, PARAM), int prio, PARAM p
             return pcb[i].first_port;
         }
     }
+    ENABLE_INTR(lock);
 }
 
 PROCESS fork() {
@@ -57,22 +66,22 @@ BOOL is_active_proc(PROCESS proc) {
 
 char* get_state_name(unsigned short state) {
     switch(state) {
-        case 0:
+        case STATE_READY:
             return "READY";
             break;
-        case 1:
+        case STATE_SEND_BLOCKED:
             return "SEND_BLOCKED";
             break;
-        case 2:
+        case STATE_REPLY_BLOCKED:
             return "REPLY_BLOCKED";
             break;
-        case 3:
+        case STATE_RECEIVE_BLOCKED:
             return "RECEIVE_BLOCKED";
             break;
-        case 4:
+        case STATE_MESSAGE_BLOCKED:
             return "MESSAGE_BLOCKED";
             break;
-        case 5:
+        case STATE_INTR_BLOCKED:
             return "INTR_BLOCKED";
             break;
         default:

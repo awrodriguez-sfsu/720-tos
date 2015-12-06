@@ -148,6 +148,9 @@ PROCESS dispatcher() {
             return ready_queue[i];
         }
     }
+
+    ENABLE_INTR(lock);
+    return NULL;
 }
 
 /*
@@ -212,12 +215,5 @@ void init_dispatcher() {
 
     add_ready_queue(&pcb[0]);
 
-    /* One time setting active_proc outside of dispatch */
-    /* Dispatch expects active_proc to never be NULL*/
-    /* Therefore we initialize active_proc with the boot process here */
-    for (i = 0; i < MAX_READY_QUEUES; ++i) {
-        if(ready_queue[i] != NULL) {
-            active_proc = ready_queue[i];
-        }
-    }
+    active_proc = ready_queue[pcb[0].priority];
 }

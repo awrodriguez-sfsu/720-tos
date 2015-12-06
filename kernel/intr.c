@@ -1,12 +1,10 @@
 #include <kernel.h>
 #include "../include/kernel.h"
-#include "../include/assert.h"
 
 BOOL interrupts_initialized = FALSE;
 
-IDT idt [MAX_INTERRUPTS];
-PROCESS interrupt_table [MAX_INTERRUPTS];
-PROCESS p;
+IDT idt[MAX_INTERRUPTS];
+PROCESS interrupt_table[MAX_INTERRUPTS];
 
 void load_idt (IDT* base) {
     unsigned short           limit;
@@ -116,10 +114,23 @@ void exception16() {
 }
 
 void isr_timer_handler() {
+    volatile int lock;
+    DISABLE_INTR(lock);
+
+    PROCESS process = interrupt_table[TIMER_IRQ];
+
+    if(process != NULL && process->state == STATE_INTR_BLOCKED) {
+        change_state(process, STATE_READY);
+        interrupt_table[TIMER_IRQ] = NULL;
+    }
+
     active_proc = dispatcher();
+
+    ENABLE_INTR(lock);
 }
 
 void isr_timer_wrapper() {
+    /* save context */
     asm("pushl %eax");
     asm("pushl %ecx");
     asm("pushl %edx");
@@ -136,6 +147,7 @@ void isr_timer_wrapper() {
     asm("movb $0x20,%al");
     asm("outb %al,$0x20");
 
+    /* load context */
     asm("popl %edi");
     asm("popl %esi");
     asm("popl %ebp");
@@ -150,71 +162,100 @@ void isr_timer_wrapper() {
 /*
  * COM1 ISR
  */
-void isr_com1 ();
-void dummy_isr_com1 () {
+void isr_com1_handler() {
 
+}
+
+void isr_com1_wrapper() {
+    /* save context */
+    asm("pushl %eax");
+    asm("pushl %ecx");
+    asm("pushl %edx");
+    asm("pushl %ebx");
+    asm("pushl %ebp");
+    asm("pushl %esi");
+    asm("pushl %edi");
+
+    asm("movl %%esp, %0" : "=m" (active_proc->esp) : );
+    isr_com1_handler();
+    asm("movl %0, %%esp" : : "m" (active_proc->esp));
+
+    /* Reset interrupt controller */
+    asm("movb $0x20,%al");
+    asm("outb %al,$0x20");
+
+    /* load context */
+    asm("popl %edi");
+    asm("popl %esi");
+    asm("popl %ebp");
+    asm("popl %ebx");
+    asm("popl %edx");
+    asm("popl %ecx");
+    asm("popl %eax");
+
+    asm("iret");
 }
 
 /*
  * Keyboard ISR
  */
-void isr_keyb();
-void dummy_isr_keyb()
-{
-    /*
-     *	PUSHL	%EAX		; Save process' context
-     *  PUSHL   %ECX
-     *  PUSHL   %EDX
-     *  PUSHL   %EBX
-     *  PUSHL   %EBP
-     *  PUSHL   %ESI
-     *  PUSHL   %EDI
-     */
-    asm ("isr_keyb:");
-    asm ("pushl %eax;pushl %ecx;pushl %edx");
-    asm ("pushl %ebx;pushl %ebp;pushl %esi;pushl %edi");
+void isr_keyb_handler() {
 
-    /* Save the context pointer ESP to the PCB */
-    asm ("movl %%esp,%0" : "=m" (active_proc->esp) : );
+}
 
-    p = interrupt_table[KEYB_IRQ];
+void isr_keyb_wrapper() {
+    /* save context */
+    asm("pushl %eax");
+    asm("pushl %ecx");
+    asm("pushl %edx");
+    asm("pushl %ebx");
+    asm("pushl %ebp");
+    asm("pushl %esi");
+    asm("pushl %edi");
 
-    if (p == NULL) {
-        panic ("service_intr_0x61: Spurious interrupt");
-    }
+    asm("movl %%esp, %0" : "=m" (active_proc->esp) : );
+    isr_keyb_handler();
+    asm("movl %0, %%esp" : : "m" (active_proc->esp));
 
-    if (p->state != STATE_INTR_BLOCKED) {
-        panic ("service_intr_0x61: No process waiting");
-    }
+    /* Reset interrupt controller */
+    asm("movb $0x20,%al");
+    asm("outb %al,$0x20");
 
-    /* Add event handler to ready queue */
-    add_ready_queue (p);
+    /* load context */
+    asm("popl %edi");
+    asm("popl %esi");
+    asm("popl %ebp");
+    asm("popl %ebx");
+    asm("popl %edx");
+    asm("popl %ecx");
+    asm("popl %eax");
 
-    active_proc = dispatcher();
+    asm("iret");
+}
 
-    /* Restore context pointer ESP */
-    asm ("movl %0,%%esp" : : "m" (active_proc->esp) );
-
-    /*
-     *	MOVB  $0x20,%AL	; Reset interrupt controller
-     *	OUTB  %AL,$0x20
-     *	POPL  %EDI      ; Restore previously saved context
-     *  POPL  %ESI
-     *  POPL  %EBP
-     *  POPL  %EBX
-     *  POPL  %EDX
-     *  POPL  %ECX
-     *  POPL  %EAX
-     *	IRET		; Return to new process
-     */
-    asm ("movb $0x20,%al;outb %al,$0x20");
-    asm ("popl %edi;popl %esi;popl %ebp;popl %ebx");
-    asm ("popl %edx;popl %ecx;popl %eax");
-    asm ("iret");
+BOOL invalid_interrupt(int intr_no) {
+    return !(intr_no == TIMER_IRQ || intr_no == COM1_IRQ || intr_no == KEYB_IRQ);
 }
 
 void wait_for_interrupt (int intr_no) {
+    volatile int lock;
+    DISABLE_INTR(lock);
 
+    if(active_proc->state == STATE_INTR_BLOCKED || invalid_interrupt(intr_no)) {
+        ENABLE_INTR(lock);
+        return;
+    }
+
+    while(interrupt_table[intr_no]->state == STATE_INTR_BLOCKED) {
+        ENABLE_INTR(lock);
+        resign();
+    }
+
+    interrupt_table[intr_no] = active_proc;
+    change_state(active_proc, STATE_INTR_BLOCKED);
+
+    ENABLE_INTR(lock);
+    resign();
 }
 
 void delay () {
@@ -254,6 +295,7 @@ void init_interrupts() {
 
     for(i = 17; i < MAX_INTERRUPTS; i++) {
         init_idt_entry(i, dummy_isr);
+        interrupt_table[i] = NULL;
     }
 
     init_idt_entry(0,  exception0);

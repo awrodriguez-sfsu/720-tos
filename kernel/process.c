@@ -45,6 +45,7 @@ PORT create_process (void (*ptr_to_new_proc) (PROCESS, PARAM), int prio, PARAM p
             pcb[i].name = name;
 
             add_ready_queue(&pcb[i]);
+            ENABLE_INTR(lock);
             return pcb[i].first_port;
         }
     }

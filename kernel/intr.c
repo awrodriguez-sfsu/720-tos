@@ -119,7 +119,7 @@ void isr_timer_handler() {
 
     PROCESS process = interrupt_table[TIMER_IRQ];
 
-    if(process != NULL && process->state == STATE_INTR_BLOCKED) {
+    if(process != NULL) {
         change_state(process, STATE_READY);
         interrupt_table[TIMER_IRQ] = NULL;
     }

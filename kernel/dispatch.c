@@ -168,9 +168,9 @@ void resign() {
     /* between normal resign and interrupts */
     asm("pushfl");
     asm("cli");
-    asm("pop %eax");
+    asm("popl %eax");
     asm("xchg (%esp), %eax");
-    asm("push %cs");
+    asm("pushl %cs");
     asm("pushl %eax");
 
     asm("pushl %eax");

@@ -19,7 +19,7 @@ void timer_notifier(PROCESS self, PARAM param) {
 
 void timer_process(PROCESS self, PARAM param) {
     PORT timer_notifier_port = create_port();
-    create_process(timer_notifier, 7, (PARAM) timer_notifier_port, "Timer Service Notifier");
+    create_process(timer_notifier, 7, (PARAM) timer_notifier_port, "Timer Notifier");
 
     int i;
     PROCESS client_process;

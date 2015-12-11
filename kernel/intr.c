@@ -212,7 +212,19 @@ void isr_com1_wrapper() {
  * Keyboard ISR
  */
 void isr_keyb_handler() {
+    volatile int lock;
+    DISABLE_INTR(lock);
 
+    PROCESS process = interrupt_table[KEYB_IRQ];
+
+    if(process != NULL) {
+        change_state(process, STATE_READY);
+        interrupt_table[KEYB_IRQ] = NULL;
+    }
+
+    active_proc = dispatcher();
+
+    ENABLE_INTR(lock);
 }
 
 void isr_keyb_wrapper() {
@@ -330,6 +342,7 @@ void init_interrupts() {
 
     init_idt_entry(TIMER_IRQ, isr_timer_wrapper);
     init_idt_entry(COM1_IRQ, isr_com1_wrapper);
+    init_idt_entry(KEYB_IRQ, isr_keyb_wrapper);
 
     re_program_interrupt_controller();
 

@@ -1,5 +1,6 @@
 
 #include <kernel.h>
+#include "../include/kernel.h"
 
 int k_strlen(const char* str) {
     const char* string = str;
@@ -51,3 +52,13 @@ int k_memcmp(const void* b1, const void* b2, int len) {
     return 0;
 }
 
+BOOL k_strcmp(const char* str1, const char* str2) {
+    int length1 = k_strlen(str1);
+    int length2 = k_strlen(str2);
+
+    if(length1 != length2) {
+        return FALSE;
+    } else {
+        return !(k_memcmp((void*) str1, (void*) str2, length1));
+    }
+}

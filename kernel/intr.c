@@ -163,7 +163,19 @@ void isr_timer_wrapper() {
  * COM1 ISR
  */
 void isr_com1_handler() {
+    volatile int lock;
+    DISABLE_INTR(lock);
 
+    PROCESS process = interrupt_table[COM1_IRQ];
+
+    if(process != NULL) {
+        change_state(process, STATE_READY);
+        interrupt_table[COM1_IRQ] = NULL;
+    }
+
+    active_proc = dispatcher();
+
+    ENABLE_INTR(lock);
 }
 
 void isr_com1_wrapper() {
@@ -246,7 +258,7 @@ void wait_for_interrupt (int intr_no) {
         return;
     }
 
-    while(interrupt_table[intr_no]->state == STATE_INTR_BLOCKED) {
+    while(interrupt_table[intr_no] != NULL && interrupt_table[intr_no]->state == STATE_INTR_BLOCKED) {
         ENABLE_INTR(lock);
         resign();
     }
@@ -317,6 +329,7 @@ void init_interrupts() {
     init_idt_entry(16, exception16);
 
     init_idt_entry(TIMER_IRQ, isr_timer_wrapper);
+    init_idt_entry(COM1_IRQ, isr_com1_wrapper);
 
     re_program_interrupt_controller();
 

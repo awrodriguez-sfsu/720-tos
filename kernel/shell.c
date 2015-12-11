@@ -1,8 +1,5 @@
 #include <kernel.h>
 
-
-
-
-void init_shell()
-{
+void init_shell() {
+    
 }

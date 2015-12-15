@@ -35,11 +35,13 @@ PORT create_new_port (PROCESS owner) {
             port[i].blocked_list_tail = NULL;
             port[i].next = NULL;
 
+            ENABLE_INTR(lock);
             return &port[i];
         }
     }
 
     ENABLE_INTR(lock);
+    return (PORT) NULL;
 }
 
 void open_port (PORT port) {

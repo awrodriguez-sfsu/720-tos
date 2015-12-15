@@ -18,9 +18,42 @@ void reset_command() {
     command_length = 0;
 }
 
+void shell_print_ascii() {
+    kprintf("             ____________________________________________________\n");
+    kprintf("            /                                                    \\\n");
+    kprintf("           |    _____________________________________________     |\n");
+    kprintf("           |   |                                             |    |\n");
+    kprintf("           |   |  Welcome to TOS!                            |    |\n");
+    kprintf("           |   |  By: Anthony Rodriguez                      |    |\n");
+    kprintf("           |   |                                             |    |\n");
+    kprintf("           |   |                                             |    |\n");
+    kprintf("           |   |                                             |    |\n");
+    kprintf("           |   |                                             |    |\n");
+    kprintf("           |   |                                             |    |\n");
+    kprintf("           |   |                                             |    |\n");
+    kprintf("           |   |_____________________________________________|    |\n");
+    kprintf("           |                                                      |\n");
+    kprintf("            \\_____________________________________________________/\n");
+    kprintf("                   \\_______________________________________/\n");
+    kprintf("             _____________________________________________________\n");
+    kprintf("          _-'.-.-. .---.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.--.  .-.-.`-_\n");
+    kprintf("       _-'.-.-.-. .---.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-`__`. .-.-.-.`-_\n");
+    kprintf("    _-'.-.-.-.-. .-----.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-----. .-.-.-.-.`-_\n");
+    kprintf(" _-'.-.-.-.-.-. .---.-. .-----------------------------. .-.---. .---.-.-.-.`-_\n");
+    kprintf(":-----------------------------------------------------------------------------:\n");
+    kprintf("`---._.-----------------------------------------------------------------._.---'\n");
+
+    char ch;
+    Keyb_Message msg;
+    msg.key_buffer = &ch;
+    send(keyb_port, &msg);
+
+    clear_window(kernel_window);
+}
+
 void shell_print_welcome() {
-    wprintf(&shell_window, "=====TOS Shell=====\n");
-    wprintf(&shell_window, "      Welcome      \n");
+    wprintf(&shell_window, "============= Welcome to TOS =============\n");
+    wprintf(&shell_window, "=====Type help for a list of commands=====\n");
 }
 
 void shell_prompt() {
@@ -34,6 +67,7 @@ void shell_help() {
     wprintf(&shell_window, "clear          Clear window\n");
     wprintf(&shell_window, "ps             Print all processes\n");
     wprintf(&shell_window, "train          Run the train application\n");
+    wprintf(&shell_window, "ascii-art      Display Startup ascii art\n");
     wprintf(&shell_window, "pacman         Pacman\n");
     wprintf(&shell_window, "\n");
 }
@@ -68,8 +102,11 @@ void execute(char* command, unsigned short command_length) {
         shell_clear();
     } else if(k_strcmp(command, "ps")) {
         shell_print();
-    } else if (k_strcmp(command, "train")) {
+    } else if(k_strcmp(command, "train")) {
+        clear_window(kernel_window);
         shell_train();
+    } else if(k_strcmp(command, "ascii-art")) {
+        shell_print_ascii();
     } else {
         shell_not_recognized();
     }
@@ -83,9 +120,9 @@ void shell_process(PROCESS self, PARAM param) {
 
     reset_command();
     clear_window(kernel_window);
+    shell_print_ascii();
     shell_print_welcome();
     shell_prompt();
-    shell_train();
 
     while(TRUE) {
         char ch;

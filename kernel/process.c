@@ -50,6 +50,7 @@ PORT create_process (void (*ptr_to_new_proc) (PROCESS, PARAM), int prio, PARAM p
         }
     }
     ENABLE_INTR(lock);
+    return (PORT) NULL;
 }
 
 PROCESS fork() {

@@ -1,38 +1,170 @@
 #include <kernel.h>
 #include "../include/kernel.h"
 
+/*
+ * order to set switches
+ * 5 -> green
+ * 8 -> green
+ * 9 -> red
+ * 4 -> green
+ * 1 -> green
+ * 7 -> red
+ *
+ * tracks that zamboni can be on
+ * [6, 7, 10, 13, 14, 15, 3, 4]
+ */
+
 #define SLEEP_TIME 15
-
-#define set_speed(speed) "L20S"speed"\015"
-#define change_direction "L20D\015"
-#define change_switch_green(switch) "M"switch"G\015"
-#define change_switch_red(switch) "M"switch"R\015"
-#define clear_buffer "R\015"
-#define check_contact(contact) "C"contact"\015"
-
 WINDOW train_window;
 
-/*char message_buffer[3];*/
+void send_train_message(char* output, char* result, int result_length) {
+    COM_Message msg;
+    msg.output_buffer = output;
+    msg.len_input_buffer = result_length;
+    msg.input_buffer = result;
 
-void create_com_message(COM_Message* com_message, char* message_buffer, BOOL reply, char* output) {
-    volatile int lock;
-    DISABLE_INTR(lock);
+    send(com_port, &msg);
 
-    com_message->output_buffer = output;
-
-    if(reply) {
-        com_message->len_input_buffer = 3;
-        com_message->input_buffer = message_buffer;
-    } else {
-        com_message->input_buffer = NULL;
-        com_message->len_input_buffer = 0;
-    }
-
-    ENABLE_INTR(lock);
+    sleep(SLEEP_TIME);
 }
 
-void send_train_message(COM_Message* com_message) {
-    send(com_port, com_message);
+/*
+ * Speed can be 0 - 5 in char format
+ * 0 == stop
+ * 5 == fast
+ */
+void set_speed(short speed) {
+    char set_speed_msg[7];
+    memset_b((MEM_ADDR) set_speed_msg, 0, 6);
+
+    set_speed_msg[0] = 'L';
+    set_speed_msg[1] = '2';
+    set_speed_msg[2] = '0';
+    set_speed_msg[3] = 'S';
+    set_speed_msg[4] = (char) (speed + 48);
+    set_speed_msg[5] = '\015';
+
+    send_train_message(set_speed_msg, "", 0);
+}
+
+/*
+ * Changes train direction
+ */
+void change_direction() {
+    char change_direction_msg[6];
+    memset_b((MEM_ADDR) change_direction_msg, 0, 5);
+
+    change_direction_msg[0] = 'L';
+    change_direction_msg[1] = '2';
+    change_direction_msg[2] = '0';
+    change_direction_msg[3] = 'D';
+    change_direction_msg[4] = '\015';
+
+    send_train_message(change_direction_msg, "", 0);
+}
+
+/*
+ * switch_number can be 1 - 9 in char format
+ * valid states are R or G in char format
+ */
+void change_switch_state(short switch_number, char state) {
+    char change_switch_state_msg[5];
+    memset_b((MEM_ADDR) change_switch_state_msg, 0, 4);
+
+    change_switch_state_msg[0] = 'M';
+    change_switch_state_msg[1] = (char) (switch_number + 48);
+    change_switch_state_msg[2] = state;
+    change_switch_state_msg[3] = '\015';
+
+    send_train_message(change_switch_state_msg, "", 0);
+}
+
+void clear_buffer() {
+    char clear_buffer_msg[3];
+    memset_b((MEM_ADDR) clear_buffer_msg, 0, 2);
+
+    clear_buffer_msg[0] = 'R';
+    clear_buffer_msg[1] = '\015';
+
+    send_train_message(clear_buffer_msg, "", 0);
+}
+
+/*
+ * track_numbers can be 1 - 16
+ */
+BOOL check_contact(int track_number) {
+    clear_buffer();
+
+    if(track_number < 10) {
+        char contact_response_1[3];
+        memset_b((MEM_ADDR) contact_response_1, 0, 3);
+
+        char contact_msg_lt_10[4];
+        memset_b((MEM_ADDR) contact_msg_lt_10, 0, 3);
+
+        contact_msg_lt_10[0] = 'C';
+        contact_msg_lt_10[1] = (char) (track_number + 48);
+        contact_msg_lt_10[2] = '\015';
+
+        send_train_message(contact_msg_lt_10, contact_response_1, 3);
+        return contact_response_1[1] == '1';
+    } else {
+        char contact_response_2[3];
+        memset_b((MEM_ADDR) contact_response_2, 0, 3);
+
+        char number[2];
+        number[0] = '1';
+        number[1] = (char) ((track_number % 10) + 48);
+
+        char contact_msg_gt_9[5];
+        memset_b((MEM_ADDR) contact_msg_gt_9, 0, 4);
+
+        contact_msg_gt_9[0] = 'C';
+        contact_msg_gt_9[1] = number[0];
+        contact_msg_gt_9[2] = number[1];
+        contact_msg_gt_9[3] = '\015';
+
+        send_train_message(contact_msg_gt_9, contact_response_2, 3);
+        return contact_response_2[1] == '1';
+    }
+}
+
+/*
+ * order to set switches
+ * 5 -> green
+ * 8 -> green
+ * 9 -> red
+ * 4 -> green
+ * 1 -> green
+ * 7 -> red ?????
+ */
+void track_safety() {
+    change_switch_state(5, 'G');
+    change_switch_state(8, 'G');
+    change_switch_state(9, 'R');
+    change_switch_state(4, 'G');
+    change_switch_state(1, 'G');
+}
+
+void run_test_configuration() {
+
+}
+
+BOOL wait_for_contact(int track_number, BOOL time_limit, int limit) {
+    if(time_limit) {
+        while(limit > 0) {
+            if(check_contact(track_number)) {
+                return TRUE;
+            } else {
+                limit--;
+            }
+        }
+
+        return FALSE;
+    } else {
+        while(!check_contact(track_number));
+        return TRUE;
+    }
 }
 
 //**************************
@@ -40,19 +172,7 @@ void send_train_message(COM_Message* com_message) {
 //**************************
 
 void run_configuration1(BOOL zamboni) {
-    if(TRUE) {
-        COM_Message com_message;
-        create_com_message(&com_message, "", FALSE, change_switch_red("5"));
-        send_train_message(&com_message);
 
-        COM_Message com_message2;
-        create_com_message(&com_message2, "", FALSE, change_switch_red("6"));
-        send_train_message(&com_message2);
-    } else {
-        COM_Message com_message;
-        create_com_message(&com_message, "", FALSE, set_speed("5"));
-        send_train_message(&com_message);
-    }
 }
 
 void run_configuration2(BOOL zamboni) {
@@ -67,61 +187,30 @@ void run_configuration4(BOOL zamboni) {
 
 }
 
+/*
+ * tracks that zamboni can be on
+ * [6, 7, 10, 13, 14, 15, 3, 4]
+ */
 BOOL check_for_zamboni() {
-    COM_Message clear_message;
-    COM_Message check_contact_4_message;
-
-    char reply[3];
-
-    create_com_message(&clear_message, "", FALSE, clear_buffer);
-    send(com_port, &clear_message);
-
-    sleep(SLEEP_TIME);
-
-    create_com_message(&check_contact_4_message, reply, TRUE, check_contact("4"));
-    send(com_port, &check_contact_4_message);
-
-    sleep(SLEEP_TIME);
-
-    return reply[1] == '1';
-}
-
-BOOL check_zamboni_direction() {
-    sleep(SLEEP_TIME);
-    return TRUE;
+    return wait_for_contact(3, TRUE, 25);
 }
 
 void train_process(PROCESS self, PARAM param) {
-    char buffer[3];
+    int i;
 
-    COM_Message msg;
-    msg.output_buffer = "R\015";
-    msg.len_input_buffer = 0;
-    msg.input_buffer = buffer;
-    send_train_message(&msg);
+    track_safety();
+    BOOL zamboni = check_for_zamboni();
 
-    sleep(SLEEP_TIME);
+    kprintf("found zamboni: %d", zamboni);
 
-    msg.output_buffer = "C4\015";
-    msg.input_buffer = buffer;
-    msg.len_input_buffer = 3;
-    send_train_message(&msg);
-
-    if(buffer[1] == '1') {
-        kprintf("found zamboni at the begining\n");
-    } else {
-        kprintf("did not find zamboni at the begining\n");
+    remove_ready_queue(self);
+    for( i = 1; i > MAX_PROCS; i++) {
+        if(&pcb[i] == self) {
+            pcb[i].used = FALSE;
+            break;
+        }
     }
-
-    /*BOOL zamboni = check_for_zamboni();
-
-    if(zamboni) {
-        BOOL direction = check_zamboni_direction();
-    }
-
-    run_configuration1(zamboni);*/
-
-    while(TRUE);
+    resign();
 }
 
 void init_train(WINDOW* wnd) {

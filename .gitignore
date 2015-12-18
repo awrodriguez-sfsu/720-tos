@@ -61,30 +61,30 @@ hs_err_pid*
 # host-tests executable
 stdlib-test
 
-# tos project things
-MANIFEST*
-VERSION
-ttc.save
-bochsout.txt
-
-# tos tool things
-tools/boot/
-tools/fat
-tools/loader
-tools/serial
-tools/train
-
-# tos ttc builder
-tools/ttc/images
-tools/ttc/xml
-tools/ttc/config.rc
-
-# Bochs settings
-etc/
-
-# tos images
-tos.img
-image/
+## tos project things
+#MANIFEST*
+#VERSION
+#ttc.save
+#bochsout.txt
+#
+## tos tool things
+#tools/boot/
+#tools/fat
+#tools/loader
+#tools/serial
+#tools/train
+#
+## tos ttc builder
+#tools/ttc/images
+#tools/ttc/xml
+#tools/ttc/config.rc
+#
+## Bochs settings
+#etc/
+#
+## tos images
+#tos.img
+#image/
 
 # CLion things
 CMakeLists.txt

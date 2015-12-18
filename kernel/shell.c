@@ -4,8 +4,9 @@
 #define ENTER_KEY 13
 #define BACKSPACE 8
 
-WINDOW shell_window = {0, 9, 61, 16, 0, 0, 0xDB};
 WINDOW train_window = {0, 0, 61, 9, 0, 0, ' '};
+WINDOW shell_window = {0, 9, 61, 16, 0, 0, 0xDB};
+WINDOW pacman_window = {61, 9, 18, 16, 0, 0, ' '};
 
 BOOL train_running = FALSE;
 
@@ -66,7 +67,9 @@ void shell_help() {
     wprintf(&shell_window, "help           Print list of commands\n");
     wprintf(&shell_window, "clear          Clear window\n");
     wprintf(&shell_window, "ps             Print all processes\n");
-    wprintf(&shell_window, "train          Run the train application\n");
+    wprintf(&shell_window, "train run      Run the train application\n");
+    wprintf(&shell_window, "train go       Run the train application\n");
+    wprintf(&shell_window, "train stop     Run the train application\n");
     wprintf(&shell_window, "ascii-art      Display Startup ascii art\n");
     wprintf(&shell_window, "pacman         Pacman\n");
     wprintf(&shell_window, "\n");
@@ -102,11 +105,17 @@ void execute(char* command, unsigned short command_length) {
         shell_clear();
     } else if(k_strcmp(command, "ps")) {
         shell_print();
-    } else if(k_strcmp(command, "train")) {
+    } else if(k_strcmp(command, "train run")) {
         clear_window(kernel_window);
         shell_train();
+    } else if(k_strcmp(command, "train go")) {
+        set_speed(5);
+    } else if(k_strcmp(command, "train stop")) {
+        set_speed(0);
     } else if(k_strcmp(command, "ascii-art")) {
         shell_print_ascii();
+    } else if(k_strcmp(command, "pacman")) {
+        init_pacman(&pacman_window, 5);
     } else {
         shell_not_recognized();
     }
@@ -134,7 +143,13 @@ void shell_process(PROCESS self, PARAM param) {
         if(ch == ENTER_KEY) {
             execute(command, command_length);
         } else if(ch == BACKSPACE) {
-
+            backspace(&shell_window, 3);
+            if(command_length > 0) {
+                command[command_length - 1] = 0;
+                command_length--;
+            } else {
+                reset_command();
+            }
         } else if(command_length == 256) {
             WINDOW error_window = {0, 24, 80, 1, 0, 0, ' '};
             wprintf(&error_window, "This shell does accept commands longer than 256 characters");

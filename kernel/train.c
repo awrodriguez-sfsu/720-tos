@@ -236,6 +236,8 @@ void attempt_retrieval(BOOL zamboni, int wait_time) {
 //**************************
 
 void run_configuration1(BOOL zamboni) {
+    wprintf(&train_window, "Running wagon retrieval sequence 1!\n");
+
     if(zamboni) {
         wait_for_contact_no_limit(7);
         change_switch_state(6, 'G');
@@ -261,9 +263,13 @@ void run_configuration1(BOOL zamboni) {
 
     wait_for_contact_no_limit(8);
     set_speed(0);
+
+    wprintf(&train_window, "Win!\n");
 }
 
 void run_configuration2(BOOL zamboni) {
+    wprintf(&train_window, "Running wagon retrieval sequence 2!\n");
+
     if(zamboni) {
         wait_for_contact_no_limit(3);
         change_switch_state(8, 'R');
@@ -288,9 +294,13 @@ void run_configuration2(BOOL zamboni) {
 
     wait_for_contact_no_limit(8);
     set_speed(0);
+
+    wprintf(&train_window, "Win!\n");
 }
 
 void run_configuration3(BOOL zamboni) {
+    wprintf(&train_window, "Running wagon retrieval sequence 3!\n");
+
     if(zamboni) {
         wait_for_contact_no_limit(10);
         set_speed(5);
@@ -355,9 +365,13 @@ void run_configuration3(BOOL zamboni) {
         wait_for_contact_no_limit(5);
         set_speed(0);
     }
+
+    wprintf(&train_window, "Win!\n");
 }
 
 void run_configuration4(BOOL zamboni) {
+    wprintf(&train_window, "Running wagon retrieval sequence 4!\n");
+
     if(zamboni) {
         wait_for_contact_no_limit(3);
         set_speed(4);
@@ -421,12 +435,24 @@ void run_configuration4(BOOL zamboni) {
         wait_for_contact_no_limit(5);
         set_speed(0);
     }
+
+    wprintf(&train_window, "Win!\n");
 }
 
 void run_train() {
+    wprintf(&train_window, "Making track safe\n");
     track_safety();
 
+    wprintf(&train_window, "Determining configuration...");
+
     Track_Configuration configuration = determine_configuration();
+
+    wprintf(&train_window, "Found configuration %d", configuration.config);
+    if(configuration.zamboni) {
+        wprintf(&train_window, " w/ zamboni\n");
+    } else {
+        wprintf(&train_window, " w/o zamboni\n");
+    }
 
     switch(configuration.config) {
         case 1:
@@ -442,7 +468,7 @@ void run_train() {
             run_configuration4(configuration.zamboni);
             break;
         default:
-            kprintf("could not determine configuration\n");
+            kprintf("error!! configuration subroutine not found\n");
     }
 }
 

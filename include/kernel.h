@@ -66,6 +66,10 @@ void output_string(WINDOW* wnd, const char *str);
 void wprintf(WINDOW* wnd, const char* fmt, ...);
 void kprintf(const char* fmt, ...);
 
+/*=====>>> additional window.c <<<==========================================*/
+
+void backspace(WINDOW* wnd, int limit);
+
 
 /*=====>>> process.c <<<====================================================*/
 
@@ -283,7 +287,7 @@ void init_shell();
 /*=====>>> train.c <<<===================================================*/
 
 void init_train(WINDOW* wnd);
-void set_train_speed(char* speed);
+void set_speed(short speed);
 
 /*=====>>> pacman.c <<<==================================================*/
 

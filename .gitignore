@@ -69,7 +69,7 @@ tools/fat/*
 *.bin
 
 # Bochs settings
-bochsout.txt
+#bochsout.txt
 
 # tos images
 tos.img

@@ -65,6 +65,9 @@ stdlib-test
 tools/fat/*
 !tools/fat/*.c
 
+# lib execs
+!lib/*.o
+
 # executable things
 *.bin
 
